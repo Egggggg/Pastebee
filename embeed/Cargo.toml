@@ -1,0 +1,14 @@
+[package]
+name = "embeed"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rocket = { version = "0.5.0-rc.2", features = ["json"] }
+rand = "0.8"
+rusqlite = { version = "0.28.0", features = ["bundled"] }
+
+[dependencies.rocket_contrib]
+version = "0.4.10"
+default_features = false
+features = ["sqlite_pool"]

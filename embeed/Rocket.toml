@@ -1,0 +1,2 @@
+[global.databases]
+instances = { url = "data/embeds.sqlite" }

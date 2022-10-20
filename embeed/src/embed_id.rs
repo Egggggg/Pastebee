@@ -2,6 +2,7 @@ use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 
 use rand::{self, Rng};
+use rocket::data::ToByteUnit;
 use rocket::form::{self, DataField, FromFormField, ValueField};
 use rocket::request::FromParam;
 
@@ -24,7 +25,9 @@ impl EmbedId<'_> {
 
     pub fn file_path(&self) -> PathBuf {
         let root = concat!(env!("CARGO_MANIFEST_DIR"), "/", "upload");
-        Path::new(root).join(self.0.as_ref())
+        let filename = format!("{}.html", self.0);
+
+        Path::new(root).join(filename)
     }
 }
 
@@ -48,11 +51,31 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
         if valid {
             Ok(EmbedId(Cow::Borrowed(field.value)))
         } else {
-            Err(form::Error::validation("fuck you"))
+            Err(form::Error::validation("must be ascii alphanumeric"))?
         }
     }
 
     async fn from_data(field: DataField<'a, '_>) -> form::Result<'a, Self> {
-        todo!("parse embed id");
+        let limit = field.request.limits().get("id").unwrap_or(256.kibibytes());
+
+        let bytes = field.data.open(limit).into_bytes().await?;
+
+        if !bytes.is_complete() {
+            Err((None, Some(limit)))?;
+        }
+
+        let bytes = bytes.into_inner();
+
+        if bytes.iter().all(|c| c.is_ascii_alphanumeric()) {
+            Ok(EmbedId(Cow::Borrowed(
+                String::from_utf8(bytes).unwrap().as_ref(),
+            )))
+        } else {
+            Err(form::Error::validation("must be ascii alphanumeric"))?
+        }
+    }
+
+    fn default() -> Option<Self> {
+        Some(EmbedId(Cow::Borrowed("!!")))
     }
 }

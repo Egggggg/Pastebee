@@ -2,6 +2,7 @@
 extern crate rocket;
 
 mod embed_id;
+mod hex_color;
 
 use rocket::form::Form;
 use rocket::fs::NamedFile;
@@ -12,6 +13,7 @@ use rocket::tokio::fs::File;
 use rocket::tokio::io::AsyncReadExt;
 
 use embed_id::EmbedId;
+use hex_color::HexColor;
 
 const ID_LENGTH: usize = 3;
 const HOST: Absolute<'static> = uri!("http://localhost:8000");
@@ -20,7 +22,8 @@ const HOST: Absolute<'static> = uri!("http://localhost:8000");
 struct UploadData<'a> {
     desc: String,
     title: String,
-    color: String,
+    site_name: String,
+    color: HexColor<'a>,
     image: String,
     id: EmbedId<'a>,
 }
@@ -77,12 +80,11 @@ fn index() -> &'static str {
 
 		POST /
 
-			accepts raw data in the body and responds with
-			the URL to a page containing the body's content
+			accepts form data and creates an opengraph endpoint to match
 
 		GET /<id>
 
-			retrieves the content for the paste with id `<id>`
+			retrieves the content for the embed with id `<id>`
 	"
 }
 
@@ -91,7 +93,11 @@ async fn retrieve<'a>(id: EmbedId<'a>) -> Option<File> {
     File::open(id.file_path()).await.ok()
 }
 
-#[post("/", data = "<paste>")]
-async fn upload(paste: Form<UploadData>, auth: Auth) -> Result<String, UploadError> {
-    if paste.id.is_empty() || !paste.id.chars().all(|c| c.is_ascii_alphanumeric()) {}
+#[post("/", data = "<embed>")]
+async fn upload<'a>(embed: Form<UploadData<'a>>, auth: Auth) -> std::io::Result<&'a str> {
+    let desc = embed.desc;
+    let title = embed.title;
+    let site_name = embed.site_name;
+    let color = embed.color;
+    let image = embed.image;
 }
