@@ -2,13 +2,14 @@ use std::borrow::Cow;
 use std::path::{Path, PathBuf};
 
 use rand::{self, Rng};
+use rocket::form::{self, DataField, FromFormField, ValueField};
 use rocket::request::FromParam;
 
 #[derive(UriDisplayPath)]
-pub struct PasteId<'a>(Cow<'a, str>);
+pub struct EmbedId<'a>(Cow<'a, str>);
 
-impl PasteId<'_> {
-    pub fn new(size: usize) -> PasteId<'static> {
+impl EmbedId<'_> {
+    pub fn new(size: usize) -> EmbedId<'static> {
         const BASE62: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
         let mut id = String::with_capacity(size);
@@ -18,7 +19,7 @@ impl PasteId<'_> {
             id.push(BASE62[rng.gen::<usize>() % 62] as char);
         }
 
-        PasteId(Cow::Owned(id))
+        EmbedId(Cow::Owned(id))
     }
 
     pub fn file_path(&self) -> PathBuf {
@@ -27,14 +28,31 @@ impl PasteId<'_> {
     }
 }
 
-impl<'a> FromParam<'a> for PasteId<'a> {
+impl<'a> FromParam<'a> for EmbedId<'a> {
     type Error = &'a str;
 
     fn from_param(param: &'a str) -> Result<Self, Self::Error> {
         param
             .chars()
             .all(|c| c.is_ascii_alphanumeric())
-            .then(|| PasteId(param.into()))
+            .then(|| EmbedId(param.into()))
             .ok_or(param)
+    }
+}
+
+#[rocket::async_trait]
+impl<'a> FromFormField<'a> for EmbedId<'a> {
+    fn from_value(field: ValueField<'a>) -> form::Result<'a, Self> {
+        let valid = field.value.chars().all(|c| c.is_ascii_alphanumeric());
+
+        if valid {
+            Ok(EmbedId(Cow::Borrowed(field.value)))
+        } else {
+            Err(form::Error::validation("fuck you"))
+        }
+    }
+
+    async fn from_data(field: DataField<'a, '_>) -> form::Result<'a, Self> {
+        todo!("parse embed id");
     }
 }

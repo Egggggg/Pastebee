@@ -1,26 +1,28 @@
 #[macro_use]
 extern crate rocket;
 
-mod paste_id;
+mod embed_id;
 
-use rocket::data::{Data, ToByteUnit};
+use rocket::form::Form;
 use rocket::fs::NamedFile;
 use rocket::http::uri::Absolute;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
-use rocket::serde::json::Json;
-use rocket::serde::Deserialize;
 use rocket::tokio::fs::File;
 use rocket::tokio::io::AsyncReadExt;
 
-use paste_id::PasteId;
+use embed_id::EmbedId;
 
 const ID_LENGTH: usize = 3;
 const HOST: Absolute<'static> = uri!("http://localhost:8000");
 
-#[derive(Deserialize)]
-struct UploadData {
-    content: String,
+#[derive(FromForm)]
+struct UploadData<'a> {
+    desc: String,
+    title: String,
+    color: String,
+    image: String,
+    id: EmbedId<'a>,
 }
 
 #[derive(Debug)]
@@ -85,11 +87,11 @@ fn index() -> &'static str {
 }
 
 #[get("/<id>")]
-async fn retrieve<'a>(id: PasteId<'a>) -> Option<File> {
+async fn retrieve<'a>(id: EmbedId<'a>) -> Option<File> {
     File::open(id.file_path()).await.ok()
 }
 
 #[post("/", data = "<paste>")]
-async fn upload_form(paste: Json<UploadData>, auth: Auth) -> std::io::Result<String> {
-    let id = PasteId::new(ID_LENGTH);
+async fn upload(paste: Form<UploadData>, auth: Auth) -> Result<String, UploadError> {
+    if paste.id.is_empty() || !paste.id.chars().all(|c| c.is_ascii_alphanumeric()) {}
 }

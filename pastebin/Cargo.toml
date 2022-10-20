@@ -1,9 +1,8 @@
 [package]
-name = "pastebin"
+name = "embeed"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 rocket = { version = "0.5.0-rc.2", features = ["json"] }
 rand = "0.8"
-serde = "1.0.145"
