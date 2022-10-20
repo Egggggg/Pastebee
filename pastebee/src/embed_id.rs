@@ -76,6 +76,6 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
     }
 
     fn default() -> Option<Self> {
-        Some(EmbedId(Cow::Borrowed("!!")))
+		Some(EmbedId::new(10))
     }
 }
