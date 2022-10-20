@@ -1,7 +1,8 @@
 mod embed_id;
 mod hex_color;
 
-use crate::{Auth, DbResult, PostsDbConn};
+use crate::{Auth, AuthState, DbResult, PostsDbConn, STATIC_PATH};
+use const_format::concatcp;
 use embed_id::EmbedId;
 use hex_color::HexColor;
 use rocket::fairing::AdHoc;
@@ -28,8 +29,14 @@ pub fn stage() -> AdHoc {
 }
 
 #[get("/")]
-async fn index() -> io::Result<NamedFile> {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/static/embeds/index.html");
+async fn index(auth: AuthState) -> io::Result<NamedFile> {
+    let path: &str;
+
+    if auth.0 {
+        path = concatcp!(STATIC_PATH, "/static/embeds/post.html");
+    } else {
+        path = concatcp!(STATIC_PATH, "/static/embeds/noauth.html");
+    }
     NamedFile::open(path).await
 }
 
@@ -40,7 +47,7 @@ async fn retrieve<'a>(id: EmbedId<'a>) -> Option<File> {
 
 #[post("/", data = "<embed>")]
 async fn upload<'a>(
-    auth: Auth,
+    _auth: Auth,
     mut db: Connection<PostsDbConn>,
     embed: Form<UploadData<'a>>,
 ) -> DbResult<String> {

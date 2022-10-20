@@ -3,11 +3,14 @@ extern crate rocket;
 
 mod embeds;
 
+use const_format::concatcp;
 use rocket::fs::NamedFile;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use rocket::tokio::io::{self, AsyncReadExt};
 use rocket_db_pools::Database;
+
+const STATIC_PATH: &'static str = env!("CARGO_MANIFEST_DIR");
 
 #[derive(Database)]
 #[database("posts")]
@@ -21,14 +24,18 @@ enum AuthError {
     NoPassword,
 }
 
-pub(crate) struct AuthLogin(bool);
+// AuthCookie should be used on routes that need auth state, but should still be available to everyone
+pub(crate) struct AuthState(bool);
+
+// Just a wrapper that responds with a failure on failure to authenticate
+// Should be used on routes that should be unavailable to unauthenticated users
 pub(crate) struct Auth(bool);
 
 #[rocket::async_trait]
-impl<'a> FromRequest<'a> for AuthLogin {
+impl<'a> FromRequest<'a> for AuthState {
     type Error = AuthError;
 
-    async fn from_request(request: &'a Request<'_>) -> Outcome<AuthLogin, AuthError> {
+    async fn from_request(request: &'a Request<'_>) -> Outcome<AuthState, AuthError> {
         let password = read_password().await;
 
         if password.is_err() {
@@ -36,17 +43,18 @@ impl<'a> FromRequest<'a> for AuthLogin {
         }
 
         let password = password.unwrap();
+        let cookie = request.cookies().get_private("password");
 
-        let received = request
-            .headers()
-            .get_one("Authorization")
-            .unwrap_or("")
-            .to_owned();
+        if cookie.is_none() {
+            return Outcome::Success(AuthState(false));
+        }
 
-        if password == received {
-            Outcome::Success(AuthLogin(true))
+        let cookie = cookie.unwrap().value().to_owned();
+
+        if password == cookie {
+            Outcome::Success(AuthState(true))
         } else {
-            Outcome::Failure((Status { code: 401 }, AuthError::WrongPassword))
+            Outcome::Success(AuthState(false))
         }
     }
 }
@@ -56,25 +64,12 @@ impl<'a> FromRequest<'a> for Auth {
     type Error = AuthError;
 
     async fn from_request(request: &'a Request<'_>) -> Outcome<Auth, AuthError> {
-        let password = read_password().await;
+        let authed = AuthState::from_request(request).await;
 
-        if password.is_err() {
-            return Outcome::Success(Auth(false));
-        }
-
-        let password = password.unwrap();
-        let cookie = request.cookies().get_private("password");
-
-        if cookie.is_none() {
-            return Outcome::Success(Auth(false));
-        }
-
-        let cookie = cookie.unwrap().value().to_owned();
-
-        if password == cookie {
-            Outcome::Success(Auth(true))
+        if authed.is_failure() {
+            Outcome::Failure((Status { code: 401 }, AuthError::WrongPassword))
         } else {
-            Outcome::Success(Auth(false))
+            Outcome::Success(Auth(true))
         }
     }
 }
@@ -97,13 +92,13 @@ fn rocket() -> _ {
 }
 
 #[get("/")]
-async fn index(auth: Auth) -> io::Result<NamedFile> {
+async fn index(auth: AuthState) -> io::Result<NamedFile> {
     let path: &str;
 
-    if !auth.0 {
-        path = concat!(env!("CARGO_MANIFEST_DIR"), "/static/login.html");
+    if auth.0 {
+        path = concatcp!(STATIC_PATH, "/static/index.html");
     } else {
-        path = concat!(env!("CARGO_MANIFEST_DIR"), "/static/index.html");
+        path = concatcp!(STATIC_PATH, "/static/login.html");
     }
 
     NamedFile::open(path).await
