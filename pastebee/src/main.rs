@@ -1,32 +1,19 @@
 #[macro_use]
 extern crate rocket;
 
-mod embed_id;
-mod hex_color;
+mod embeds;
 
-use rocket::form::Form;
 use rocket::fs::NamedFile;
-use rocket::http::uri::Absolute;
 use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
-use rocket::tokio::fs::File;
-use rocket::tokio::io::AsyncReadExt;
+use rocket::tokio::io::{self, AsyncReadExt};
+use rocket_db_pools::Database;
 
-use embed_id::EmbedId;
-use hex_color::HexColor;
+#[derive(Database)]
+#[database("posts")]
+pub(crate) struct PostsDbConn(sqlx::SqlitePool);
 
-const ID_LENGTH: usize = 3;
-const HOST: Absolute<'static> = uri!("http://localhost:8000");
-
-#[derive(FromForm)]
-struct UploadData<'a> {
-    desc: String,
-    title: String,
-    site_name: String,
-    color: HexColor<'a>,
-    image: String,
-    id: EmbedId<'a>,
-}
+pub(crate) type DbResult<T, E = rocket::response::Debug<sqlx::Error>> = std::result::Result<T, E>;
 
 #[derive(Debug)]
 enum AuthError {
@@ -34,70 +21,90 @@ enum AuthError {
     NoPassword,
 }
 
-struct Auth(bool);
+pub(crate) struct AuthLogin(bool);
+pub(crate) struct Auth(bool);
+
+#[rocket::async_trait]
+impl<'a> FromRequest<'a> for AuthLogin {
+    type Error = AuthError;
+
+    async fn from_request(request: &'a Request<'_>) -> Outcome<AuthLogin, AuthError> {
+        let password = read_password().await;
+
+        if password.is_err() {
+            return Outcome::Failure((Status { code: 500 }, AuthError::NoPassword));
+        }
+
+        let password = password.unwrap();
+
+        let received = request
+            .headers()
+            .get_one("Authorization")
+            .unwrap_or("")
+            .to_owned();
+
+        if password == received {
+            Outcome::Success(AuthLogin(true))
+        } else {
+            Outcome::Failure((Status { code: 401 }, AuthError::WrongPassword))
+        }
+    }
+}
 
 #[rocket::async_trait]
 impl<'a> FromRequest<'a> for Auth {
     type Error = AuthError;
 
     async fn from_request(request: &'a Request<'_>) -> Outcome<Auth, AuthError> {
-        let mut password = String::new();
-        let cred_file = NamedFile::open("creds").await;
+        let password = read_password().await;
 
-        if cred_file.is_err() {
-            return Outcome::Failure((Status { code: 500 }, AuthError::NoPassword));
+        if password.is_err() {
+            return Outcome::Success(Auth(false));
         }
 
-        cred_file
-            .unwrap()
-            .read_to_string(&mut password)
-            .await
-            .unwrap();
+        let password = password.unwrap();
+        let cookie = request.cookies().get_private("password");
 
-        let received = request
-            .headers()
-            .get_one("password")
-            .unwrap_or("")
-            .to_owned();
+        if cookie.is_none() {
+            return Outcome::Success(Auth(false));
+        }
 
-        if password == received {
+        let cookie = cookie.unwrap().value().to_owned();
+
+        if password == cookie {
             Outcome::Success(Auth(true))
         } else {
-            Outcome::Failure((Status { code: 403 }, AuthError::WrongPassword))
+            Outcome::Success(Auth(false))
         }
     }
 }
 
+async fn read_password() -> io::Result<String> {
+    let mut password = String::new();
+    let mut cred_file = NamedFile::open("creds").await?;
+
+    cred_file.read_to_string(&mut password).await?;
+
+    Ok(password)
+}
+
 #[launch]
 fn rocket() -> _ {
-    rocket::build().mount("/", routes![index, retrieve, upload])
+    rocket::build()
+        .attach(PostsDbConn::init())
+        .attach(embeds::stage())
+        .mount("/", routes![index])
 }
 
 #[get("/")]
-fn index() -> &'static str {
-    "
-	USAGE
+async fn index(auth: Auth) -> io::Result<NamedFile> {
+    let path: &str;
 
-		POST /
+    if !auth.0 {
+        path = concat!(env!("CARGO_MANIFEST_DIR"), "/static/login.html");
+    } else {
+        path = concat!(env!("CARGO_MANIFEST_DIR"), "/static/index.html");
+    }
 
-			accepts form data and creates an opengraph endpoint to match
-
-		GET /<id>
-
-			retrieves the content for the embed with id `<id>`
-	"
-}
-
-#[get("/<id>")]
-async fn retrieve<'a>(id: EmbedId<'a>) -> Option<File> {
-    File::open(id.file_path()).await.ok()
-}
-
-#[post("/", data = "<embed>")]
-async fn upload<'a>(embed: Form<UploadData<'a>>, auth: Auth) -> std::io::Result<&'a str> {
-    let desc = embed.desc;
-    let title = embed.title;
-    let site_name = embed.site_name;
-    let color = embed.color;
-    let image = embed.image;
+    NamedFile::open(path).await
 }

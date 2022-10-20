@@ -1,2 +1,2 @@
-[global.databases]
-instances = { url = "data/embeds.sqlite" }
+[global.databases.posts]
+url = "data/posts.sqlite"

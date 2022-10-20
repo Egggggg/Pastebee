@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use rocket::form::{self, FromFormField, ValueField};
 
-pub struct HexColor<'a>(&'a str);
+pub struct HexColor<'a>(pub &'a str);
 
 impl<'a> Display for HexColor<'a> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

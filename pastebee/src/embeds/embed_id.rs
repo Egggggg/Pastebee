@@ -7,7 +7,7 @@ use rocket::form::{self, DataField, FromFormField, ValueField};
 use rocket::request::FromParam;
 
 #[derive(UriDisplayPath)]
-pub struct EmbedId<'a>(Cow<'a, str>);
+pub struct EmbedId<'a>(pub Cow<'a, str>);
 
 impl EmbedId<'_> {
     pub fn new(size: usize) -> EmbedId<'static> {
@@ -67,15 +67,15 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
         let bytes = bytes.into_inner();
 
         if bytes.iter().all(|c| c.is_ascii_alphanumeric()) {
-            Ok(EmbedId(Cow::Borrowed(
-                String::from_utf8(bytes).unwrap().as_ref(),
-            )))
+            let stringified = String::from_utf8(bytes).unwrap();
+
+            Ok(EmbedId(Cow::Owned(stringified)))
         } else {
             Err(form::Error::validation("must be ascii alphanumeric"))?
         }
     }
 
     fn default() -> Option<Self> {
-		Some(EmbedId::new(10))
+        Some(EmbedId::new(10))
     }
 }
