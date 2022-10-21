@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta content="{{ site_name }}" property="og:site_name">
+	<meta content="{{ title }}" property="og:title">
+	<meta content="{{ color }}" name="theme-color">
+	<meta content="{{ description }}" property="og:description">
+	<meta content="{{ image }}" property="og:image">
+	<meta name="twitter:card" content="summary_large_image">
+	<title>{{ title }}</title>
+</head>
+<body>
+	Site Name: {{ site_name }}<br>
+	Title: {{ title }}<br>
+	Color: <span style="background-color: {{ color }}">{{ color }}</span><br>
+	Description: {{ description }}<br>
+	Image: {{ image }}<br>
+	<img src="{{ image }}">
+</body>
+</html>

@@ -6,14 +6,27 @@ use std::{
 use rocket::{
     http::Status,
     request::{FromRequest, Outcome, Request},
+    response::Responder,
 };
+use rocket_dyn_templates::{context, Template};
 
 use super::password::{read_password, Password};
 
 #[derive(Debug)]
 pub enum AuthError {
     WrongPassword,
-    NoPassword,
+}
+
+#[derive(Responder)]
+pub enum LoginResponse {
+    #[response(status = 500)]
+    NoPassword(Template),
+    #[response(status = 401)]
+    WrongPassword(Template),
+    #[response(status = 200)]
+    ValidPassword(Template),
+    #[response(status = 200)]
+    AlreadyAuthed(Template),
 }
 
 // AuthCookie should be used on routes that need auth state, but should still be available to everyone
@@ -32,7 +45,7 @@ impl<'a> FromRequest<'a> for AuthState {
     type Error = AuthError;
 
     async fn from_request(request: &'a Request<'_>) -> Outcome<Self, Self::Error> {
-        let cookie = request.cookies().get_private("password");
+        let cookie = request.cookies().get_private("Authorization");
 
         if cookie.is_none() {
             return Outcome::Success(AuthState { valid: false });
@@ -43,29 +56,6 @@ impl<'a> FromRequest<'a> for AuthState {
         } else {
             Outcome::Success(AuthState { valid: false })
         }
-
-        /*
-        let password = read_password().await;
-
-        if password.is_err() {
-            return Outcome::Failure((Status { code: 500 }, AuthError::NoPassword));
-        }
-
-        let password = password.unwrap();
-        let cookie = request.cookies().get_private("password");
-
-        if cookie.is_none() {
-            return Outcome::Success(AuthState { good: false });
-        }
-
-        let cookie = cookie.unwrap().value().to_owned();
-
-        if password == cookie {
-            Outcome::Success(AuthState { good: true })
-        } else {
-            Outcome::Success(AuthState { good: false })
-        }
-        */
     }
 }
 
@@ -84,11 +74,14 @@ impl<'a> FromRequest<'a> for Auth {
     }
 }
 
-pub async fn validate_password(received: Password) -> Outcome<bool, AuthError> {
+pub async fn validate_password(received: &Password) -> LoginResponse {
     let password = read_password().await;
 
     if password.is_err() {
-        return Outcome::Failure((Status { code: 500 }, AuthError::NoPassword));
+        return LoginResponse::NoPassword(Template::render(
+            "login",
+            context! { message: "someone fucked up" },
+        ));
     }
 
     let password = password.unwrap();
@@ -97,9 +90,17 @@ pub async fn validate_password(received: Password) -> Outcome<bool, AuthError> {
     received.hash(&mut hasher);
     let hash = hasher.finish().to_string();
 
+    println!("{}", hash);
+
     if hash == password {
-        Outcome::Success(true)
+        LoginResponse::ValidPassword(Template::render(
+            "login",
+            context! { message: "authenticated :D" },
+        ))
     } else {
-        Outcome::Success(false)
+        LoginResponse::WrongPassword(Template::render(
+            "login",
+            context! { message: "wrong password" },
+        ))
     }
 }

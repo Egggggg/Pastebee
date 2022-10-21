@@ -8,6 +8,7 @@ use const_format::concatcp;
 use rocket::fs::NamedFile;
 use rocket::tokio::io;
 use rocket_db_pools::Database;
+use rocket_dyn_templates::Template;
 
 use login::auth::AuthState;
 
@@ -26,6 +27,7 @@ fn rocket() -> _ {
         .attach(embeds::stage())
         .attach(login::stage())
         .mount("/", routes![index])
+        .attach(Template::fairing())
 }
 
 #[get("/")]

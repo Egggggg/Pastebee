@@ -1,2 +1,5 @@
+[default]
+template_dir = "static/templates"
+
 [global.databases.posts]
 url = "data/posts.sqlite"

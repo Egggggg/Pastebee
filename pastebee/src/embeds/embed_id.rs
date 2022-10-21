@@ -1,15 +1,10 @@
-use std::borrow::Cow;
-use std::path::{Path, PathBuf};
-
-use const_format::concatcp;
 use rand::{self, Rng};
 use rocket::data::ToByteUnit;
 use rocket::form::{self, DataField, FromFormField, ValueField};
 use rocket::request::FromParam;
+use std::borrow::Cow;
 
-use crate::STATIC_PATH;
-
-#[derive(UriDisplayPath)]
+#[derive(Clone, UriDisplayPath)]
 pub struct EmbedId<'a>(pub Cow<'a, str>);
 
 impl<'a> EmbedId<'a> {
@@ -24,13 +19,6 @@ impl<'a> EmbedId<'a> {
         }
 
         EmbedId(Cow::Owned(id))
-    }
-
-    pub fn file_path(&self) -> PathBuf {
-        let root = concatcp!(STATIC_PATH, "/", "upload");
-        let filename = format!("{}.html", self.0);
-
-        Path::new(root).join(filename)
     }
 }
 

@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>New Embed</title>
+	<style>
+		#theform {
+			width: 25%;
+			display: flex;
+			flex-direction: column;
+		}
+
+		div {
+			width: 100%;
+		}
+
+		label {
+			width: 25%;
+		}
+	</style>
+</head>
+
+<body>
+	<form method="post" id="theform">
+		<div>
+			<label for="id">ID: </label>
+			<input type="text" name="id" id="id">
+		</div>
+		<div>
+			<label for="site_name">Site Name: </label>
+			<input type="text" name="site_name" id="site_name">
+		</div>
+		<div>
+			<label for="title">Title: </label>
+			<input type="text" name="title" id="title">
+		</div>
+		<div>
+			<label for="color">Color (for Discord): </label>
+			<input type="text" name="color" id="color">
+		</div>
+		<div>
+			<label for="description">Description: </label>
+			<input type="text" name="description" id="description">
+		</div>
+		<div>
+			<label for="image">Image URL: </label>
+			<input type="text" name="image" id="image">
+		</div>
+		<input type="submit" value="Submit">
+	</form>
+</body>
+
+</html>

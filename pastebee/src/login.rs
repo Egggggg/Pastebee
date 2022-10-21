@@ -2,13 +2,18 @@ pub mod auth;
 mod password;
 
 use auth::AuthState;
+use const_format::concatcp;
 use rocket::{
     fairing::AdHoc,
     form::Form,
-    http::{Cookie, CookieJar, Status},
+    fs::NamedFile,
+    http::{Cookie, CookieJar},
+    tokio::io,
 };
+use rocket_dyn_templates::{context, Template};
 
-use auth::validate_password;
+use crate::STATIC_PATH;
+use auth::{validate_password, LoginResponse};
 use password::Password;
 
 #[derive(FromForm)]
@@ -18,30 +23,39 @@ struct Login {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Login stage", |rocket| async {
-        rocket.mount("/login", routes![login])
+        rocket.mount("/login", routes![index, login])
     })
 }
 
-#[post("/", data = "<login>")]
-async fn login<'a>(
-    auth: AuthState,
-    cookies: &CookieJar<'a>,
-    login: Form<Login>,
-) -> (Status, &'static str) {
+#[get("/")]
+async fn index(auth: AuthState) -> io::Result<NamedFile> {
+    let path: &str;
+
     if auth.valid {
-        return (Status { code: 202 }, "already logged in");
+        path = concatcp!(STATIC_PATH, "/static/index.html");
+    } else {
+        path = concatcp!(STATIC_PATH, "/static/login.html");
     }
 
-    let valid = validate_password(login.password).await;
+    NamedFile::open(path).await
+}
 
-	if valid.is_failure() {
-		return (Status { code: })
-	}
+#[post("/", data = "<login>")]
+async fn login<'a>(auth: AuthState, cookies: &CookieJar<'a>, login: Form<Login>) -> LoginResponse {
+    if auth.valid {
+        return LoginResponse::AlreadyAuthed(Template::render(
+            "login",
+            context! { message: "already logged in" },
+        ));
+    }
 
-    if valid {
-        cookies.add_private(Cookie::new("Authorization", "valid"));
-        (Status { code: 202 }, "successfully logged in")
-    } else {
-        (Status { code: 401 }, "login failed")
+    let valid = validate_password(&login.password).await;
+
+    match valid {
+        LoginResponse::ValidPassword(_) => {
+            cookies.add_private(Cookie::new("Authorization", "valid"));
+            valid
+        }
+        _ => valid,
     }
 }
