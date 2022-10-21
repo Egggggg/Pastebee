@@ -1,7 +1,10 @@
 mod embed_id;
 mod hex_color;
 
-use crate::{Auth, AuthState, DbResult, PostsDbConn, STATIC_PATH};
+use crate::{
+    login::auth::{Auth, AuthState},
+    DbResult, PostsDbConn, STATIC_PATH,
+};
 use const_format::concatcp;
 use embed_id::EmbedId;
 use hex_color::HexColor;
@@ -32,7 +35,7 @@ pub fn stage() -> AdHoc {
 async fn index(auth: AuthState) -> io::Result<NamedFile> {
     let path: &str;
 
-    if auth.0 {
+    if auth.valid {
         path = concatcp!(STATIC_PATH, "/static/embeds/post.html");
     } else {
         path = concatcp!(STATIC_PATH, "/static/embeds/noauth.html");

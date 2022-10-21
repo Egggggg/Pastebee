@@ -12,7 +12,7 @@ use crate::STATIC_PATH;
 #[derive(UriDisplayPath)]
 pub struct EmbedId<'a>(pub Cow<'a, str>);
 
-impl EmbedId<'_> {
+impl<'a> EmbedId<'a> {
     pub fn new(size: usize) -> EmbedId<'static> {
         const BASE62: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
@@ -60,7 +60,6 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
 
     async fn from_data(field: DataField<'a, '_>) -> form::Result<'a, Self> {
         let limit = field.request.limits().get("id").unwrap_or(256.kibibytes());
-
         let bytes = field.data.open(limit).into_bytes().await?;
 
         if !bytes.is_complete() {
