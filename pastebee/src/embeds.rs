@@ -8,11 +8,11 @@ use crate::{
 };
 use embed_id::EmbedId;
 use hex_color::HexColor;
-use rocket::form::Form;
 use rocket::fs::NamedFile;
 use rocket::http::Status;
 use rocket::tokio::io;
 use rocket::{fairing::AdHoc, serde::Serialize};
+use rocket::{form::Form, Request};
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 use sqlx::{sqlite::SqliteRow, Row};
@@ -59,9 +59,7 @@ impl From<SqliteRow> for TemplateContext {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Embeds stage", |rocket| async {
-        rocket
-            .mount("/embed", routes![index, retrieve, retrieve_raw, upload])
-            .register("/embed", catchers![invalid])
+        rocket.mount("/embed", routes![index, retrieve, retrieve_raw, upload])
     })
 }
 
