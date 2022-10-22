@@ -10,3 +10,7 @@ services:
     - /etc/letsencrypt/archive/bees.run/fullchain1.pem:/var/www/letsencrypt/fullchain.pem:ro
     - /etc/letsencrypt/archive/bees.run/privkey1.pem:/var/www/letsencrypt/privkey.pem:ro
     - /etc/nginx/:/etc/nginx:ro
+  
+networks:
+  default:
+    driver: host
