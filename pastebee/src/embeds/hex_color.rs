@@ -13,7 +13,9 @@ impl<'a> Display for HexColor<'a> {
 #[rocket::async_trait]
 impl<'a> FromFormField<'a> for HexColor<'a> {
     fn from_value(field: ValueField<'a>) -> form::Result<'a, Self> {
-        if field.value.len() != 7 {
+        if field.value.len() == 0 {
+            return Ok(Self(""));
+        } else if field.value.len() != 7 {
             return Err(form::Error::validation("must contain '#' and 6 hex digits"))?;
         }
 

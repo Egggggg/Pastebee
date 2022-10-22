@@ -3,13 +3,14 @@ mod hex_color;
 
 use crate::{
     filepath,
-    login::auth::{Auth, AuthState},
-    DbResult, PostsDbConn,
+    gateway::auth::{Auth, AuthState},
+    PostsDbConn,
 };
 use embed_id::EmbedId;
 use hex_color::HexColor;
 use rocket::form::Form;
 use rocket::fs::NamedFile;
+use rocket::http::Status;
 use rocket::tokio::io;
 use rocket::{fairing::AdHoc, serde::Serialize};
 use rocket_db_pools::Connection;
@@ -28,6 +29,7 @@ struct UploadData<'a> {
 
 #[derive(Serialize, Debug)]
 struct TemplateContext {
+    id: String,
     site_name: String,
     title: String,
     color: String,
@@ -37,13 +39,15 @@ struct TemplateContext {
 
 impl From<SqliteRow> for TemplateContext {
     fn from(value: SqliteRow) -> Self {
-        let site_name = value.try_get(0).unwrap_or(String::new());
-        let title = value.try_get(1).unwrap_or(String::new());
-        let color = value.try_get(2).unwrap_or(String::new());
-        let description = value.try_get(3).unwrap_or(String::new());
-        let image = value.try_get(4).unwrap_or(String::new());
+        let id = value.try_get(0).unwrap_or(String::new());
+        let site_name = value.try_get(1).unwrap_or(String::new());
+        let title = value.try_get(2).unwrap_or(String::new());
+        let color = value.try_get(3).unwrap_or(String::new());
+        let description = value.try_get(4).unwrap_or(String::new());
+        let image = value.try_get(5).unwrap_or(String::new());
 
         Self {
+            id,
             site_name,
             title,
             color,
@@ -55,7 +59,9 @@ impl From<SqliteRow> for TemplateContext {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Embeds stage", |rocket| async {
-        rocket.mount("/embed", routes![index, retrieve, retrieve_raw, upload])
+        rocket
+            .mount("/embed", routes![index, retrieve, retrieve_raw, upload])
+            .register("/embed", catchers![invalid])
     })
 }
 
@@ -72,28 +78,44 @@ async fn index(auth: AuthState) -> io::Result<NamedFile> {
 }
 
 #[get("/<id>")]
-async fn retrieve<'a>(mut db: Connection<PostsDbConn>, id: EmbedId<'a>) -> DbResult<Template> {
-    let row =
-        sqlx::query("SELECT site_name, title, color, description, image FROM embeds WHERE id=?")
-            .bind(&id.0)
-            .fetch_one(&mut *db)
-            .await?;
+async fn retrieve<'a>(
+    mut db: Connection<PostsDbConn>,
+    id: EmbedId<'a>,
+) -> Result<Template, Status> {
+    let row = sqlx::query(
+        "SELECT id, site_name, title, color, description, image FROM embeds WHERE id=?",
+    )
+    .bind(&id.0)
+    .fetch_one(&mut *db)
+    .await;
 
+    if row.is_err() {
+        return Err(Status::NotFound);
+    }
+
+    let row = row.unwrap();
     let context: TemplateContext = row.into();
-
-    dbg!(&context);
 
     Ok(Template::render("embed", context))
 }
 
 #[get("/<id>/raw")]
-async fn retrieve_raw<'a>(mut db: Connection<PostsDbConn>, id: EmbedId<'a>) -> DbResult<Template> {
-    let row =
-        sqlx::query("SELECT site_name, title, color, description, image FROM embeds WHERE id=?")
-            .bind(&id.0)
-            .fetch_one(&mut *db)
-            .await?;
+async fn retrieve_raw<'a>(
+    mut db: Connection<PostsDbConn>,
+    id: EmbedId<'a>,
+) -> Result<Template, Status> {
+    let row = sqlx::query(
+        "SELECT id, site_name, title, color, description, image FROM embeds WHERE id=?",
+    )
+    .bind(&id.0)
+    .fetch_one(&mut *db)
+    .await;
 
+    if row.is_err() {
+        return Err(Status::NotFound);
+    }
+
+    let row = row.unwrap();
     let context: TemplateContext = row.into();
 
     dbg!(&context);
@@ -106,7 +128,7 @@ async fn upload<'a>(
     _auth: Auth,
     mut db: Connection<PostsDbConn>,
     embed: Form<UploadData<'a>>,
-) -> DbResult<Template> {
+) -> Result<Template, Status> {
     let id = &embed.id;
     let site_name = &embed.site_name;
     let title = &embed.title;
@@ -114,7 +136,7 @@ async fn upload<'a>(
     let description = &embed.description;
     let image = &embed.image;
 
-    sqlx::query("INSERT INTO embeds (id, site_name, title, color, description, image) VALUES (?, ?, ?, ?, ?, ?)")
+    let query = sqlx::query("INSERT INTO embeds (id, site_name, title, color, description, image) VALUES (?, ?, ?, ?, ?, ?)")
 		.bind(&id.0)
 		.bind(site_name)
 		.bind(title)
@@ -122,7 +144,11 @@ async fn upload<'a>(
 		.bind(description)
 		.bind(image)
 		.execute(&mut *db)
-		.await?;
+		.await;
 
-    retrieve(db, embed.id.clone()).await
+    if query.is_err() {
+        Err(Status::Conflict)
+    } else {
+        retrieve(db, embed.id.clone()).await
+    }
 }

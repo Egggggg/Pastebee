@@ -2,6 +2,8 @@ version: "3.9"
 services:
   beesrun:
     image: nginx
+    depends_on:
+    - pastebee
     ports:
     - 80:80
     - 443:443
@@ -9,7 +11,10 @@ services:
     - /etc/letsencrypt/archive/bees.run/fullchain1.pem:/var/www/letsencrypt/fullchain.pem:ro
     - /etc/letsencrypt/archive/bees.run/privkey1.pem:/var/www/letsencrypt/privkey.pem:ro
     - /etc/nginx/:/etc/nginx:ro
-  
-networks:
-  default:
-    driver: host
+  pastebee:
+    image: pastebee
+    volumes:
+    - /home/admin/Pastebee/pastebee/creds:/pastebee/creds
+    - /home/admin/Pastebee/pastebee/Rocket.toml:/pastebee/Rocket.toml
+    - /home/admin/Pastebee/pastebee/static:/pastebee/static
+    - /home/admin/Pastebee/pastebee/data:/pastebee/data

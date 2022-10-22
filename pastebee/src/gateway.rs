@@ -12,7 +12,7 @@ use rocket::{
 use rocket_dyn_templates::{context, Template};
 
 use crate::filepath;
-use auth::{validate_password, LoginResponse};
+use auth::{validate_password, LoginResponse, LogoutResponse};
 use password::Password;
 
 #[derive(FromForm)]
@@ -22,7 +22,9 @@ struct Login {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Login stage", |rocket| async {
-        rocket.mount("/login", routes![index, login])
+        rocket
+            .mount("/login", routes![index, login])
+            .mount("/logout", routes![index, logout])
     })
 }
 
@@ -31,9 +33,9 @@ async fn index(auth: AuthState) -> io::Result<NamedFile> {
     let path: String;
 
     if auth.valid {
-        path = filepath("/static/index.html");
+        path = filepath("/static/auth/logout.html");
     } else {
-        path = filepath("/static/login.html");
+        path = filepath("/static/auth/login.html");
     }
 
     NamedFile::open(path).await
@@ -56,5 +58,22 @@ async fn login<'a>(auth: AuthState, cookies: &CookieJar<'a>, login: Form<Login>)
             valid
         }
         _ => valid,
+    }
+}
+
+#[post("/")]
+async fn logout<'a>(auth: AuthState, cookies: &CookieJar<'a>) -> LogoutResponse {
+    if auth.valid {
+        cookies.remove_private(Cookie::named("Authorization"));
+
+        LogoutResponse::LoggedOut(Template::render(
+            "logout",
+            context! { message: "successfully logged out"},
+        ))
+    } else {
+        LogoutResponse::NotLoggedIn(Template::render(
+            "logout",
+            context! { message: "not even logged in" },
+        ))
     }
 }

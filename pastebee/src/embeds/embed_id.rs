@@ -28,7 +28,7 @@ impl<'a> FromParam<'a> for EmbedId<'a> {
     fn from_param(param: &'a str) -> Result<Self, Self::Error> {
         param
             .chars()
-            .all(|c| c.is_ascii_alphanumeric())
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
             .then(|| EmbedId(param.into()))
             .ok_or(param)
     }
@@ -37,12 +37,17 @@ impl<'a> FromParam<'a> for EmbedId<'a> {
 #[rocket::async_trait]
 impl<'a> FromFormField<'a> for EmbedId<'a> {
     fn from_value(field: ValueField<'a>) -> form::Result<'a, Self> {
-        let valid = field.value.chars().all(|c| c.is_ascii_alphanumeric());
+        let valid = field
+            .value
+            .chars()
+            .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
 
         if valid {
             Ok(EmbedId(Cow::Borrowed(field.value)))
         } else {
-            Err(form::Error::validation("must be ascii alphanumeric"))?
+            Err(form::Error::validation(
+                "can only contain A-Z, a-z, 0-9, -, _",
+            ))?
         }
     }
 
@@ -56,16 +61,21 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
 
         let bytes = bytes.into_inner();
 
-        if bytes.iter().all(|c| c.is_ascii_alphanumeric()) {
+        if bytes
+            .iter()
+            .all(|c| c.is_ascii_alphanumeric() || c == &b'-' || c == &b'_')
+        {
             let stringified = String::from_utf8(bytes).unwrap();
+
+            if stringified.len() == 0 {
+                Err(form::Error::validation("id cannot be empty"))?
+            }
 
             Ok(EmbedId(Cow::Owned(stringified)))
         } else {
-            Err(form::Error::validation("must be ascii alphanumeric"))?
+            Err(form::Error::validation(
+                "can only contain A-Z, a-z, 0-9, -, _",
+            ))?
         }
-    }
-
-    fn default() -> Option<Self> {
-        Some(EmbedId::new(10))
     }
 }

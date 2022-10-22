@@ -29,6 +29,14 @@ pub enum LoginResponse {
     AlreadyAuthed(Template),
 }
 
+#[derive(Responder)]
+pub enum LogoutResponse {
+    #[response(status = 200)]
+    LoggedOut(Template),
+    #[response(status = 400)]
+    NotLoggedIn(Template),
+}
+
 // AuthCookie should be used on routes that need auth state, but should still be available to everyone
 pub struct AuthState {
     pub valid: bool,

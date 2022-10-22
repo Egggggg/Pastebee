@@ -2,7 +2,7 @@
 extern crate rocket;
 
 mod embeds;
-mod login;
+mod gateway;
 
 use std::env;
 
@@ -11,13 +11,13 @@ use rocket::tokio::io;
 use rocket_db_pools::Database;
 use rocket_dyn_templates::Template;
 
-use login::auth::AuthState;
+use gateway::auth::AuthState;
 
 #[derive(Database)]
 #[database("posts")]
 pub struct PostsDbConn(sqlx::SqlitePool);
 
-pub type DbResult<T, E = rocket::response::Debug<sqlx::Error>> = std::result::Result<T, E>;
+pub type DbResult<T> = std::result::Result<T, rocket::response::Debug<sqlx::Error>>;
 
 pub fn filepath<'a>(relative: &'a str) -> String {
     let current_dir = env::current_dir().unwrap();
@@ -31,8 +31,8 @@ fn rocket() -> _ {
     rocket::build()
         .attach(PostsDbConn::init())
         .attach(embeds::stage())
-        .attach(login::stage())
-        .mount("/", routes![index])
+        .attach(gateway::stage())
+        .mount("/", routes![index, favicon])
         .attach(Template::fairing())
 }
 
@@ -43,8 +43,13 @@ async fn index(auth: AuthState) -> io::Result<NamedFile> {
     if auth.valid {
         path = filepath("/static/index.html");
     } else {
-        path = filepath("/static/login.html");
+        path = filepath("/static/auth/login.html");
     }
 
     NamedFile::open(path).await
+}
+
+#[get("/favicon.ico")]
+async fn favicon() -> std::io::Result<NamedFile> {
+    NamedFile::open(filepath("/favicon.ico")).await
 }

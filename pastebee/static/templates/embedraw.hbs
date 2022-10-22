@@ -4,20 +4,82 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<meta content="{{ site_name }}" property="og:site_name">
-	<meta content="{{ title }}" property="og:title">
-	<meta content="{{ color }}" name="theme-color">
-	<meta content="{{ description }}" property="og:description">
-	<meta content="{{ image }}" property="og:image">
-	<meta name="twitter:card" content="summary_large_image">
+
+	{{ #if site_name }}
+		<meta content="{{ site_name }}" property="og:site_name">
+	{{ /if }}
+	{{ #if title }}
+		<meta content="{{ title }}" property="og:title">
+	{{ /if }}
+	{{ #if color }}
+		<meta content="{{ color }}" name="theme-color">
+	{{ /if }}
+	{{ #if description }}
+		<meta content="{{ description }}" property="og:description">
+	{{ /if }}
+	{{ #if image }}
+		<meta content="{{ image }}" property="og:image">
+		<meta name="twitter:card" content="summary_large_image">
+	{{ /if }}
 	<title>{{ title }}</title>
+	<style>
+		body {
+			width: 75%;
+			display: grid;
+			grid-template-columns: 5em 75%;
+			gap: 0.25em;
+		}
+
+		span {
+			text-align: right;
+		}
+
+		#color {
+			display: inline-block;
+			width: 1em;
+			height: 1em;
+			border-radius: 50%;
+			background-color: {{ color }};
+		}
+
+		img {
+			max-width: max(256px, min(50%, 512px));
+		}
+	</style>
 </head>
 <body>
-	Site Name: {{ site_name }}<br>
-	Title: {{ title }}<br>
-	Color: <span style="background-color: {{ color }}">{{ color }}</span><br>
-	Description: {{ description }}<br>
-	Image: {{ image }}<br>
-	<img src="{{ image }}">
+	{{ #if id }}
+		<span>ID: </span>
+		<div>
+			<a href="/embed/{{ id }}">{{ id }}</a>
+		</div>
+	{{ /if }}
+	{{ #if site_name }}
+		<span>Site Name: </span>
+		{{ site_name }}
+	{{ /if }}
+	{{ #if title }}
+		<span>Title: </span>
+		{{ title }}
+	{{ /if }}
+	{{ #if color }}
+		<span>Color: </span>
+		<div>
+			<span id="color"></span>
+			<span>{{ color }}</span>
+		</div>
+	{{ /if }}
+	{{ #if description }}
+		<span>Description: </span>
+		{{ description }}
+	{{ /if }}
+	{{ #if image }}
+		<span>Image: </span>
+		<div>
+			<a href="{{ image }}">{{ image }}</a>
+		</div>
+		<span><!-- Spacer --></span>
+		<img src="{{ image }}">
+	{{ /if }}
 </body>
 </html>
