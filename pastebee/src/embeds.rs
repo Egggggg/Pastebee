@@ -2,16 +2,16 @@ mod embed_id;
 mod hex_color;
 
 use crate::{
+    filepath,
     login::auth::{Auth, AuthState},
-    DbResult, PostsDbConn, STATIC_PATH,
+    DbResult, PostsDbConn,
 };
-use const_format::concatcp;
 use embed_id::EmbedId;
 use hex_color::HexColor;
+use rocket::form::Form;
 use rocket::fs::NamedFile;
 use rocket::tokio::io;
 use rocket::{fairing::AdHoc, serde::Serialize};
-use rocket::{form::Form, response::Redirect};
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 use sqlx::{sqlite::SqliteRow, Row};
@@ -61,12 +61,12 @@ pub fn stage() -> AdHoc {
 
 #[get("/")]
 async fn index(auth: AuthState) -> io::Result<NamedFile> {
-    let path: &str;
+    let path: String;
 
     if auth.valid {
-        path = concatcp!(STATIC_PATH, "/static/embeds/post.html");
+        path = filepath("/static/embeds/post.html");
     } else {
-        path = concatcp!(STATIC_PATH, "/static/embeds/noauth.html");
+        path = filepath("/static/embeds/noauth.html");
     }
     NamedFile::open(path).await
 }

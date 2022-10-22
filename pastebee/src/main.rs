@@ -4,7 +4,8 @@ extern crate rocket;
 mod embeds;
 mod login;
 
-use const_format::concatcp;
+use std::env;
+
 use rocket::fs::NamedFile;
 use rocket::tokio::io;
 use rocket_db_pools::Database;
@@ -12,13 +13,18 @@ use rocket_dyn_templates::Template;
 
 use login::auth::AuthState;
 
-const STATIC_PATH: &'static str = env!("CARGO_MANIFEST_DIR");
-
 #[derive(Database)]
 #[database("posts")]
 pub struct PostsDbConn(sqlx::SqlitePool);
 
 pub type DbResult<T, E = rocket::response::Debug<sqlx::Error>> = std::result::Result<T, E>;
+
+pub fn filepath<'a>(relative: &'a str) -> String {
+    let current_dir = env::current_dir().unwrap();
+    let current_dir = current_dir.to_str().unwrap();
+
+    format!("{}{}", current_dir, relative)
+}
 
 #[launch]
 fn rocket() -> _ {
@@ -32,12 +38,12 @@ fn rocket() -> _ {
 
 #[get("/")]
 async fn index(auth: AuthState) -> io::Result<NamedFile> {
-    let path: &str;
+    let path: String;
 
     if auth.valid {
-        path = concatcp!(STATIC_PATH, "/static/index.html");
+        path = filepath("/static/index.html");
     } else {
-        path = concatcp!(STATIC_PATH, "/static/login.html");
+        path = filepath("/static/login.html");
     }
 
     NamedFile::open(path).await

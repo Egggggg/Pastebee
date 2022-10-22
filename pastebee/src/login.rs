@@ -2,7 +2,6 @@ pub mod auth;
 mod password;
 
 use auth::AuthState;
-use const_format::concatcp;
 use rocket::{
     fairing::AdHoc,
     form::Form,
@@ -12,7 +11,7 @@ use rocket::{
 };
 use rocket_dyn_templates::{context, Template};
 
-use crate::STATIC_PATH;
+use crate::filepath;
 use auth::{validate_password, LoginResponse};
 use password::Password;
 
@@ -29,12 +28,12 @@ pub fn stage() -> AdHoc {
 
 #[get("/")]
 async fn index(auth: AuthState) -> io::Result<NamedFile> {
-    let path: &str;
+    let path: String;
 
     if auth.valid {
-        path = concatcp!(STATIC_PATH, "/static/index.html");
+        path = filepath("/static/index.html");
     } else {
-        path = concatcp!(STATIC_PATH, "/static/login.html");
+        path = filepath("/static/login.html");
     }
 
     NamedFile::open(path).await
