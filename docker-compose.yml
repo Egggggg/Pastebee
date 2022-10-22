@@ -7,15 +7,6 @@ services:
     - 80:80
     - 443:443
     volumes:
-    - type: volume
-      source: /etc/letsencrypt/archive/bees.run/fullchain1.pem
-      target: /var/www/letsencrypt/fullchain.pem
-      read_only: true
-    - type: volume
-      source: /etc/letsencrypt/archive/bees.run/privkey1.pem
-      target: /var/www/letsencrypt/privkey.pem
-      read_only: true
-    - type: volume
-      source: /etc/nginx/
-      target: /etc/nginx
-      read_only: true
+    - /etc/letsencrypt/archive/bees.run/fullchain1.pem:/var/www/letsencrypt/fullchain.pem:ro
+    - /etc/letsencrypt/archive/bees.run/privkey1.pem:/var/www/letsencrypt/privkey.pem:ro
+    - /etc/nginx/:/etc/nginx:ro
