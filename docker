@@ -1,0 +1,1 @@
+sudo docker run --name nginx -v /etc/nginx/:/etc/nginx:ro -v /etc/letsencrypt/live/bees.run:/var/www/letsencrypt:ro nginx 
