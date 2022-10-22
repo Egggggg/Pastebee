@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  beesrun:
+    image: nginx
+    ports:
+    - 8000:8000
+    - 80:80
+    - 443:443
+    volumes:
+    - type: volume
+      source: /etc/letsencrypt/archive/bees.run/fullchain1.pem
+      target: /var/www/letsencrypt/fullchain.pem
+      read_only: true
+    - type: volume
+      source: /etc/letsencrypt/archive/bees.run/privkey1.pem
+      target: /var/www/letsencrypt/privkey.pem
+      read_only: true
+    - type: volume
+      source: /etc/nginx/
+      target: /etc/nginx
+      read_only: true
