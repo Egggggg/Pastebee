@@ -7,6 +7,8 @@ use std::borrow::Cow;
 #[derive(Clone, UriDisplayPath)]
 pub struct EmbedId<'a>(pub Cow<'a, str>);
 
+const DEFAULT_LEN: usize = 5;
+
 impl<'a> EmbedId<'a> {
     pub fn new(size: usize) -> EmbedId<'static> {
         const BASE62: &[u8] = b"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -37,6 +39,10 @@ impl<'a> FromParam<'a> for EmbedId<'a> {
 #[rocket::async_trait]
 impl<'a> FromFormField<'a> for EmbedId<'a> {
     fn from_value(field: ValueField<'a>) -> form::Result<'a, Self> {
+        if field.value.len() == 0 {
+            return Ok(EmbedId::new(DEFAULT_LEN));
+        }
+
         let valid = field
             .value
             .chars()
@@ -68,14 +74,18 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
             let stringified = String::from_utf8(bytes).unwrap();
 
             if stringified.len() == 0 {
-                Err(form::Error::validation("id cannot be empty"))?
+                Ok(EmbedId::new(DEFAULT_LEN))
+            } else {
+                Ok(EmbedId(Cow::Owned(stringified)))
             }
-
-            Ok(EmbedId(Cow::Owned(stringified)))
         } else {
             Err(form::Error::validation(
                 "can only contain A-Z, a-z, 0-9, -, _",
             ))?
         }
+    }
+
+    fn default() -> Option<EmbedId<'static>> {
+        Some(EmbedId::new(DEFAULT_LEN))
     }
 }
