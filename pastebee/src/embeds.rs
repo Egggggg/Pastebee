@@ -138,7 +138,7 @@ async fn upload<'a>(
 		.bind(&id.0)
 		.bind(site_name)
 		.bind(title)
-		.bind(color.0)
+		.bind(&color.0)
 		.bind(description)
 		.bind(image)
 		.execute(&mut *db)
