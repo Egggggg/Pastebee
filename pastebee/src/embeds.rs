@@ -6,13 +6,13 @@ use crate::{
     gateway::auth::{Auth, AuthState},
     PostsDbConn,
 };
-use embed_id::EmbedId;
+pub use embed_id::EmbedId;
 use hex_color::HexColor;
+use rocket::form::Form;
 use rocket::fs::NamedFile;
 use rocket::http::Status;
 use rocket::tokio::io;
 use rocket::{fairing::AdHoc, serde::Serialize};
-use rocket::{form::Form, Request};
 use rocket_db_pools::Connection;
 use rocket_dyn_templates::Template;
 use sqlx::{sqlite::SqliteRow, Row};
@@ -76,7 +76,7 @@ async fn index(auth: AuthState) -> io::Result<NamedFile> {
 }
 
 #[get("/<id>")]
-async fn retrieve<'a>(
+pub async fn retrieve<'a>(
     mut db: Connection<PostsDbConn>,
     id: EmbedId<'a>,
 ) -> Result<Template, Status> {
@@ -138,7 +138,7 @@ async fn upload<'a>(
 		.bind(&id.0)
 		.bind(site_name)
 		.bind(title)
-		.bind(color.0)
+		.bind(&color.0)
 		.bind(description)
 		.bind(image)
 		.execute(&mut *db)
