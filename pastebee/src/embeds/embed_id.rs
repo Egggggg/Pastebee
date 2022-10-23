@@ -40,7 +40,7 @@ impl<'a> FromParam<'a> for EmbedId<'a> {
 impl<'a> FromFormField<'a> for EmbedId<'a> {
     fn from_value(field: ValueField<'a>) -> form::Result<'a, Self> {
         if field.value.len() == 0 {
-            return Ok(EmbedId::new(DEFAULT_LEN));
+            return Ok(Self::new(DEFAULT_LEN));
         }
 
         let valid = field
@@ -49,7 +49,7 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
             .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_');
 
         if valid {
-            Ok(EmbedId(Cow::Borrowed(field.value)))
+            Ok(Self(Cow::Borrowed(field.value)))
         } else {
             Err(form::Error::validation(
                 "can only contain A-Z, a-z, 0-9, -, _",
@@ -74,9 +74,9 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
             let stringified = String::from_utf8(bytes).unwrap();
 
             if stringified.len() == 0 {
-                Ok(EmbedId::new(DEFAULT_LEN))
+                Ok(Self::new(DEFAULT_LEN))
             } else {
-                Ok(EmbedId(Cow::Owned(stringified)))
+                Ok(Self(Cow::Owned(stringified)))
             }
         } else {
             Err(form::Error::validation(
@@ -86,6 +86,6 @@ impl<'a> FromFormField<'a> for EmbedId<'a> {
     }
 
     fn default() -> Option<EmbedId<'static>> {
-        Some(EmbedId::new(DEFAULT_LEN))
+        Some(Self::new(DEFAULT_LEN))
     }
 }
