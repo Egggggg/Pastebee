@@ -7,7 +7,6 @@ mod gateway;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
-use std::path::Path;
 
 use rocket::request::FromParam;
 use rocket::tokio::io;
@@ -52,7 +51,13 @@ fn rocket() -> _ {
         .attach(gateway::stage())
         .mount(
             "/",
-            routes![index, favicon, retrieve_generic, retrieve_asset],
+            routes![
+                index,
+                favicon,
+                retrieve_generic,
+                retrieve_asset,
+                retrieve_video
+            ],
         )
         .attach(Template::fairing())
 }
@@ -110,6 +115,16 @@ async fn retrieve_generic<'a>(
 }
 
 #[get("/assets/<path>")]
-async fn retrieve_asset<'a>(path: String) -> std::io::Result<NamedFile> {
-    NamedFile::open(filepath(&format!("assets/{}", path))).await
+async fn retrieve_asset(path: String) -> std::io::Result<NamedFile> {
+    let path = format!("/assets/{}", path);
+    let path = filepath(&path);
+
+    NamedFile::open(path).await
+}
+
+#[get("/watch?<v>")]
+async fn retrieve_video(v: String) -> std::io::Result<NamedFile> {
+    let filename = format!("{}.html", v);
+
+    retrieve_asset(filename).await
 }
