@@ -9,11 +9,8 @@ use std::collections::HashMap;
 use std::env;
 use std::path::Path;
 
-use rocket::http::uri::{Absolute, Origin};
 use rocket::request::FromParam;
-use rocket::response::Redirect;
 use rocket::tokio::io;
-use rocket::Either;
 use rocket::{fs::NamedFile, http::Status};
 use rocket_db_pools::{Connection, Database};
 use rocket_dyn_templates::Template;
