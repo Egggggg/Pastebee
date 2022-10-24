@@ -1,8 +1,4 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
+use argon2::{Argon2, PasswordHasher};
 use rocket::{
     http::Status,
     request::{FromRequest, Outcome, Request},
@@ -10,7 +6,7 @@ use rocket::{
 };
 use rocket_dyn_templates::{context, Template};
 
-use super::password::{read_password, Password};
+use super::password::read_password;
 
 #[derive(Debug)]
 pub enum AuthError {
@@ -82,7 +78,7 @@ impl<'a> FromRequest<'a> for Auth {
     }
 }
 
-pub async fn validate_password(received: &Password) -> LoginResponse {
+pub async fn validate_password<'a>(received: &'a str) -> LoginResponse {
     let password = read_password().await;
 
     if password.is_err() {
@@ -94,11 +90,21 @@ pub async fn validate_password(received: &Password) -> LoginResponse {
 
     let password = password.unwrap();
 
-    let mut hasher = DefaultHasher::new();
-    received.hash(&mut hasher);
-    let hash = hasher.finish().to_string();
+    let salt = password.0;
+    let password = password.1;
 
-    println!("{}", hash);
+    let argon2 = Argon2::default();
+
+    let hash = argon2.hash_password(received.as_bytes(), &salt);
+
+    if hash.is_err() {
+        dbg!(hash);
+        return LoginResponse::NoPassword(Template::render("login", context! { message: "how" }));
+    }
+
+    let hash = hash.unwrap().to_string();
+
+    println!("hash: {hash}, password: {password}");
 
     if hash == password {
         LoginResponse::ValidPassword(Template::render(

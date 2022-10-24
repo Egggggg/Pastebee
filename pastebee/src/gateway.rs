@@ -13,11 +13,10 @@ use rocket_dyn_templates::{context, Template};
 
 use crate::filepath;
 use auth::{validate_password, LoginResponse, LogoutResponse};
-use password::Password;
 
 #[derive(FromForm)]
 struct Login {
-    password: Password,
+    password: String,
 }
 
 pub fn stage() -> AdHoc {

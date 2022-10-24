@@ -8,6 +8,8 @@ rocket = { version = "0.5.0-rc.2", features = ["json", "secrets"] }
 rand = "0.8"
 serde = "1.0.147"
 sqlx = "0.5"
+argon2 = "0.4"
+rand_core = { version = "0.6", features = ["std"] }
 
 [dependencies.rocket_db_pools]
 version = "0.1.0-rc.2"
