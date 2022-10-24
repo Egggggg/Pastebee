@@ -98,13 +98,10 @@ pub async fn validate_password<'a>(received: &'a str) -> LoginResponse {
     let hash = argon2.hash_password(received.as_bytes(), &salt);
 
     if hash.is_err() {
-        dbg!(hash);
         return LoginResponse::NoPassword(Template::render("login", context! { message: "how" }));
     }
 
     let hash = hash.unwrap().to_string();
-
-    println!("hash: {hash}, password: {password}");
 
     if hash == password {
         LoginResponse::ValidPassword(Template::render(
