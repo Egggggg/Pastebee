@@ -7,6 +7,7 @@ mod gateway;
 use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
+use std::path::Path;
 
 use rocket::http::uri::{Absolute, Origin};
 use rocket::request::FromParam;
@@ -52,7 +53,10 @@ fn rocket() -> _ {
         .attach(PostsDbConn::init())
         .attach(embeds::stage())
         .attach(gateway::stage())
-        .mount("/", routes![index, favicon, retrieve_generic])
+        .mount(
+            "/",
+            routes![index, favicon, retrieve_generic, retrieve_asset],
+        )
         .attach(Template::fairing())
 }
 
@@ -106,4 +110,9 @@ async fn retrieve_generic<'a>(
     } else {
         Ok(Template::render("multiple", exists))
     }
+}
+
+#[get("/assets/<path>")]
+async fn retrieve_asset<'a>(path: String) -> std::io::Result<NamedFile> {
+    NamedFile::open(filepath(&format!("assets/{}", path))).await
 }
