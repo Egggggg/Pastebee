@@ -70,7 +70,8 @@ impl<'a> FromRequest<'a> for Auth {
     async fn from_request(request: &'a Request<'_>) -> Outcome<Self, Self::Error> {
         let authed = AuthState::from_request(request).await;
 
-        if authed.is_success() {
+        // we can unwrap here cause AuthState always returns Outcome::Success, just with a different inner value
+        if authed.unwrap().valid {
             Outcome::Success(Auth { valid: true })
         } else {
             Outcome::Failure((Status { code: 401 }, AuthError::WrongPassword))
