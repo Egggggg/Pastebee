@@ -10,7 +10,7 @@ use super::password::read_password;
 
 #[derive(Debug)]
 pub enum AuthError {
-    WrongPassword,
+    NotAuthed,
 }
 
 #[derive(Responder)]
@@ -49,13 +49,9 @@ impl<'a> FromRequest<'a> for AuthState {
     type Error = AuthError;
 
     async fn from_request(request: &'a Request<'_>) -> Outcome<Self, Self::Error> {
-        let cookie = request.cookies().get_private("Authorization");
+        let authed = Auth::from_request(request).await;
 
-        if cookie.is_none() {
-            return Outcome::Success(AuthState { valid: false });
-        }
-
-        if cookie.unwrap().value() == "valid" {
+        if authed.is_success() {
             Outcome::Success(AuthState { valid: true })
         } else {
             Outcome::Success(AuthState { valid: false })
@@ -68,13 +64,19 @@ impl<'a> FromRequest<'a> for Auth {
     type Error = AuthError;
 
     async fn from_request(request: &'a Request<'_>) -> Outcome<Self, Self::Error> {
-        let authed = AuthState::from_request(request).await;
+        let cookie = request.cookies().get_private("Authorization");
+
+        if cookie.is_none() {
+            return Outcome::Failure((Status { code: 401 }, AuthError::NotAuthed));
+        }
+
+        let authed = cookie.unwrap();
 
         // we can unwrap here cause AuthState always returns Outcome::Success, just with a different inner value
-        if authed.unwrap().valid {
+        if authed.value() == "valid" {
             Outcome::Success(Auth { valid: true })
         } else {
-            Outcome::Failure((Status { code: 401 }, AuthError::WrongPassword))
+            Outcome::Failure((Status { code: 401 }, AuthError::NotAuthed))
         }
     }
 }
