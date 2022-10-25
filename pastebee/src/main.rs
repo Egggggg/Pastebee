@@ -40,7 +40,7 @@ pub fn filepath<'a>(relative: &'a str) -> String {
     let current_dir = env::current_dir().unwrap();
     let current_dir = current_dir.to_str().unwrap();
 
-    format!("{}{}", current_dir, relative)
+    current_dir.to_owned() + relative
 }
 
 #[launch]
@@ -116,7 +116,7 @@ async fn retrieve_generic<'a>(
 
 #[get("/assets/<path>")]
 async fn retrieve_asset(path: String) -> std::io::Result<NamedFile> {
-    let path = format!("/assets/{}", path);
+    let path = "/assets/".to_owned() + &path;
     let path = filepath(&path);
 
     NamedFile::open(path).await
@@ -124,7 +124,7 @@ async fn retrieve_asset(path: String) -> std::io::Result<NamedFile> {
 
 #[get("/watch?<v>")]
 async fn retrieve_video(v: String) -> std::io::Result<NamedFile> {
-    let filename = format!("{}.html", v);
+    let filename = v + ".html";
 
     retrieve_asset(filename).await
 }
