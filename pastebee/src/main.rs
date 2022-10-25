@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate rocket;
 
+mod content;
 mod embeds;
 mod gateway;
 
@@ -49,6 +50,7 @@ fn rocket() -> _ {
         .attach(PostsDbConn::init())
         .attach(embeds::stage())
         .attach(gateway::stage())
+        .attach(content::stage())
         .mount(
             "/",
             routes![
