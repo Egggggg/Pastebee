@@ -72,6 +72,7 @@ async fn index(auth: AuthState) -> io::Result<NamedFile> {
     } else {
         path = filepath("/static/embeds/noauth.html");
     }
+
     NamedFile::open(path).await
 }
 
@@ -115,8 +116,6 @@ async fn retrieve_raw<'a>(
 
     let row = row.unwrap();
     let context: TemplateContext = row.into();
-
-    dbg!(&context);
 
     Ok(Template::render("embedraw", context))
 }
