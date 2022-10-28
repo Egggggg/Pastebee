@@ -56,7 +56,7 @@ fn rocket() -> _ {
             "/",
             routes![index, favicon, retrieve_generic, retrieve_video],
         )
-        .mount("/assets", FileServer::from(relative!("assets")))
+        .mount("/assets", FileServer::from(filepath("/assets")))
         .attach(Template::fairing())
 }
 
