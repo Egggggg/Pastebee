@@ -18,3 +18,4 @@ services:
     - /home/admin/Pastebee/pastebee/Rocket.toml:/pastebee/Rocket.toml
     - /home/admin/Pastebee/pastebee/static:/pastebee/static
     - /home/admin/Pastebee/pastebee/data:/pastebee/data
+    - /home/admin/Pastebee/pastebee/assets:/pastebee/assets
