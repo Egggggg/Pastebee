@@ -9,6 +9,7 @@ use std::borrow::Cow;
 use std::collections::HashMap;
 use std::env;
 
+use rocket::fs::{relative, FileServer};
 use rocket::request::FromParam;
 use rocket::tokio::io;
 use rocket::{fs::NamedFile, http::Status};
@@ -53,14 +54,9 @@ fn rocket() -> _ {
         .attach(content::stage())
         .mount(
             "/",
-            routes![
-                index,
-                favicon,
-                retrieve_generic,
-                retrieve_asset,
-                retrieve_video
-            ],
+            routes![index, favicon, retrieve_generic, retrieve_video],
         )
+        .mount("/assets", FileServer::from(relative!("assets")))
         .attach(Template::fairing())
 }
 
@@ -116,17 +112,11 @@ async fn retrieve_generic<'a>(
     }
 }
 
-#[get("/assets/<path>")]
-async fn retrieve_asset(path: String) -> std::io::Result<NamedFile> {
-    let path = "/assets/".to_owned() + &path;
-    let path = filepath(&path);
-
-    NamedFile::open(path).await
-}
-
 #[get("/watch?<v>")]
 async fn retrieve_video(v: String) -> std::io::Result<NamedFile> {
     let filename = v + ".html";
+    let path = "/assets/".to_owned() + &filename;
+    let path = filepath(&path);
 
-    retrieve_asset(filename).await
+    NamedFile::open(path).await
 }
