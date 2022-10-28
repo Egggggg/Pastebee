@@ -5,13 +5,36 @@
 	<meta charset="UTF-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="stylesheet" href="/styles/styles.css">
 	<title>New Embed</title>
 	<style>
 		#theform {
+			margin-top: 2em;
 			width: 25%;
 			display: grid;
 			grid-template-columns: 7.5em 50%;
 			gap: 0.5em;
+		}
+
+		@media (max-width: 1024px) {
+			#theform {
+				width: 50%;
+			}
+		}
+
+		@media (max-width: 512px) {
+			#theform {
+				width: 100%;
+				grid-template-columns: 5em 75%;
+			}
+		}
+
+		@media (max-width: 720px) {
+			body {
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+			}
 		}
 
 		label {
@@ -37,7 +60,7 @@
 		<p>
 			<!-- Spacer -->
 		</p>
-		<input type="submit" value="Submit">
+		<input class="button is-primary" type="submit" value="Submit">
 	</form>
 </body>
 
