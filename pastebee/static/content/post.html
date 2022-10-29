@@ -6,35 +6,37 @@
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<link rel="stylesheet" href="/styles/styles.css">
+	<script src="https://kit.fontawesome.com/b0c491002a.js" crossorigin="anonymous"></script>
 	<title>New Post</title>
 </head>
 
 <body>
 	<form method="post">
 		<div class="columns">
-			<div class="ml-5 mt-5 box column is-one-fifth">
+			<!-- Content Entry Form -->
+			<div class="m-5 box column is-narrow">
 				<div class="field">
 					<label class="label">ID</label>
 					<div class="control">
-						<input class="input" type="text" placeholder="ID">
+						<input class="input" type="text" name="id" placeholder="ID">
 					</div>
 				</div>
 				<div class="field">
 					<label class="label">Title</label>
 					<div class="control">
-						<input class="input" type="text" placeholder="Title">
+						<input class="input" type="text" name="title" placeholder="Title">
 					</div>
 				</div>
 				<div class="field">
 					<label class="label">File Path</label>
 					<div class="control">
-						<input class="input" type="text" placeholder="File path">
+						<input class="input" type="text" name="path" placeholder="File path">
 					</div>
 				</div>
 				<div class="field">
 					<label class="label">Content</label>
 					<div class="control">
-						<textarea class="textarea" placeholder="Content"></textarea>
+						<textarea class="textarea" name="content" placeholder="Content"></textarea>
 					</div>
 				</div>
 				<div class="field">
@@ -43,10 +45,22 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- Spacer -->
 			<div class="column is-one-fifth"></div>
+
+			<!-- Content Preview -->
 			<div class="box column is-one-third m-5">
-				<h1>Content</h1>
+				<div class="icon-text">
+					<button class="button is-primary is-light"><i class="fas fa-sync-alt"></i></button>
+					<h1 id="title" class="title has-text-centered">Title</h1>
+				</div>
+				<h2 id="id" class="subtitle has-text-centered">ID</h2>
+				<p id="filepath">Filepath</p>
+				<p id="content">Content</p>
 			</div>
+
+			<!-- Spacer -->
 			<div class="column"></div>
 		</div>
 	</form>
