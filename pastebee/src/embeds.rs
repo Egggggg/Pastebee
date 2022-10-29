@@ -59,7 +59,7 @@ impl From<SqliteRow> for TemplateContext {
 
 pub fn stage() -> AdHoc {
     AdHoc::on_ignite("Embeds stage", |rocket| async {
-        rocket.mount("/embed", routes![index, retrieve, retrieve_raw, upload])
+        rocket.mount("/embed", routes![index, retrieve, upload])
     })
 }
 
@@ -96,28 +96,6 @@ pub async fn retrieve<'a>(
     let context: TemplateContext = row.into();
 
     Ok(Template::render("embed", context))
-}
-
-#[get("/<id>/raw")]
-async fn retrieve_raw<'a>(
-    mut db: Connection<PostsDbConn>,
-    id: EmbedId<'a>,
-) -> Result<Template, Status> {
-    let row = sqlx::query(
-        "SELECT id, site_name, title, color, description, image FROM embeds WHERE id=?",
-    )
-    .bind(&id.0)
-    .fetch_one(&mut *db)
-    .await;
-
-    if row.is_err() {
-        return Err(Status::NotFound);
-    }
-
-    let row = row.unwrap();
-    let context: TemplateContext = row.into();
-
-    Ok(Template::render("embedraw", context))
 }
 
 #[post("/", data = "<embed>")]
