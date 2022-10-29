@@ -11,59 +11,53 @@
 </head>
 
 <body>
-	<form method="post">
-		<div class="columns">
-			<!-- Content Entry Form -->
-			<div class="m-5 box column is-narrow">
-				<div class="field">
-					<label class="label">ID</label>
-					<div class="control">
-						<input class="input" type="text" name="id" placeholder="ID">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label">Title</label>
-					<div class="control">
-						<input class="input" type="text" name="title" placeholder="Title">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label">File Path</label>
-					<div class="control">
-						<input class="input" type="text" name="path" placeholder="File path">
-					</div>
-				</div>
-				<div class="field">
-					<label class="label">Content</label>
-					<div class="control">
-						<textarea class="textarea" name="content" placeholder="Content"></textarea>
-					</div>
-				</div>
-				<div class="field">
-					<div class="control is-right">
-						<button type="submit" class="button is-primary is-fullwidth">Submit</button>
-					</div>
+	<div class="columns m-5">
+		<!-- Content Entry Form -->
+		<form method="post" class="box column is-narrow">
+			<div class="field">
+				<label class="label">ID</label>
+				<div class="control">
+					<input class="input" type="text" name="id" placeholder="ID">
 				</div>
 			</div>
-
-			<!-- Spacer -->
-			<div class="column is-one-fifth"></div>
-
-			<!-- Content Preview -->
-			<div class="box column is-one-third m-5">
-				<div class="icon-text">
-					<button class="button is-primary is-light"><i class="fas fa-sync-alt"></i></button>
-					<h1 id="title" class="title has-text-centered">Title</h1>
+			<div class="field">
+				<label class="label">Title</label>
+				<div class="control">
+					<input class="input" type="text" name="title" placeholder="Title">
 				</div>
-				<h2 id="id" class="subtitle has-text-centered">ID</h2>
-				<p id="filepath">Filepath</p>
-				<p id="content">Content</p>
 			</div>
+			<div class="field">
+				<label class="label">File Path</label>
+				<div class="control">
+					<input class="input" type="text" name="path" placeholder="File path">
+				</div>
+			</div>
+			<div class="field">
+				<label class="label">Content</label>
+				<div class="control">
+					<textarea class="textarea" name="content" placeholder="Content"></textarea>
+				</div>
+			</div>
+			<div class="field">
+				<div class="control is-right">
+					<button type="submit" class="button is-primary is-fullwidth">Submit</button>
+				</div>
+			</div>
+		</form>
 
-			<!-- Spacer -->
-			<div class="column"></div>
+		<!-- Spacer -->
+		<div class="column"></div>
+
+		<!-- Content Preview -->
+		<div class="box column is-6">
+			<div class="icon-text">
+				<button class="button is-primary is-light"><i class="fas fa-sync-alt"></i></button>
+				<h1 id="title" class="title has-text-centered">Title</h1>
+			</div>
+			<h2 id="id" class="subtitle has-text-centered">ID</h2>
+			<p id="filepath" class="has-text-centered">Filepath</p>
+			<p id="content">Content</p>
 		</div>
-	</form>
 	</div>
 </body>
 
