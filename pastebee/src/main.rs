@@ -115,7 +115,10 @@ async fn retrieve_generic<'a>(
 
 #[get("/watch?<v>")]
 async fn retrieve_video(v: String) -> std::io::Result<NamedFile> {
+    let v = v.replace(".", "-");
+    let v = v.replace("/", "-");
     let filename = v + ".html";
+
     let path = "/assets/watch/".to_owned() + &filename;
     let path = filepath(&path);
 
